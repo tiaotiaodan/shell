@@ -19,7 +19,7 @@ if [ $# -ne 1  ]
 fi
 
 function start() {
-    su - staff -c "nohup java  ${Jenkins_Variable}  ${Jenkins_War_Dir}   --httpPort=${Jenkins_Port}   >/dev/null 2>&1 &"
+    su - staff -c "nohup java  ${Jenkins_Variable}  ${Jenkins_War_Dir}   --httpPort=${Jenkins_Port}   >/dev/null 2>&1 &"     #这段是指定用户启动服务
 !
 	[ $? -eq 1 ] && echo  "正在启动 jenkins:  [Determine]"  || \
 	echo "正在启动 jenkins:  [fail]" 
