@@ -1,0 +1,42 @@
+node{
+  try {
+    gitlabCommitStatus(name: "Commit Buid"){
+    stage('拉取代码'){
+        git credentialsId: '8e719403-2999-490c-b414-fdc7981efcb4', url: 'https://git.vm.snqu.com/snqu-network/xiaoyao/yx_new_boss.git'
+    }
+  }
+    stage('代码编译'){
+        echo '代码编译'
+		sh 'ssh staff@192.168.166.122  cd ${WORKSPACE} && /usr/local/bin/composer install && /usr/bin/cp -a  .env.example.product .env  '
+	   sh 'ssh staff@192.168.166.209 "[ -d /data/pkg/${JOB_NAME} ] && echo yes || mkdir -p /data/pkg/${JOB_NAME}	"'
+	   sh 'tar -czPf /tmp/${JOB_NAME}.tar.gz .  && scp /tmp/${JOB_NAME}.tar.gz 192.168.166.209:/data/pkg/${JOB_NAME} && rm -f  /tmp/${JOB_NAME}.tar.gz  '
+    }
+    stage('SIT自动化部署'){
+        echo '自动化部署'
+        sh 'ssh staff@192.168.166.209  sh -x /scripts/xiaoyao_prod_deploy.sh ${JOB_NAME} ${DEPLOY_TYPE} ${DEPLOY_VER}'
+      
+    }
+    stage('自动化测试'){
+        echo '自动化测试'
+		
+    }
+    stage('邮件通知'){
+        echo "Email"
+        emailext body: '''你好：你的项目 $PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
+        Check console output at $BUILD_URL to view the results.''', subject: 'jenkins通知：$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!', to: 'hejiajun@snqu.com,wuchengping@snqu.com,liuhuan@snqu.com'	
+    }
+
+  } catch (e){
+      currentBuild.result = "FAILED"
+      notifyFaild()
+      throw e
+  }
+}
+
+
+def notifyFaild(){
+    
+    emailext body: '''你好：你的项目构建失败，请查看 $PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
+
+Check console output at $BUILD_URL to view the results.''', subject: '你好：你的项目构建失败，请查看$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:', to: 'shichao@snqu.com,xiongch@snqu.com,xiaohuajia@snqu.com,zhaoyongxin@snqu.com' 
+}
